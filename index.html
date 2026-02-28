@@ -1951,7 +1951,7 @@
 
         // ─── VERIFICAÇÃO HORÁRIO ──────────────────────────────────────────────────
         function isStoreClosed() {
-            //return { closed: false};
+            return { closed: false};
             const now = new Date();
             const dayFormatter = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', weekday: 'short' });
             const dayStr = dayFormatter.format(now);
