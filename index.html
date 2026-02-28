@@ -1216,8 +1216,8 @@
 
     <!-- ══ #9 MODAL PEDIDO EM GRUPO ══ -->
     <div id="group-modal">
-        <div class="modal-content" style="max-width:680px;">
-            <div class="flex justify-between items-center mb-5">
+        <div class="modal-content" style="max-width:600px;">
+            <div class="flex justify-between items-center mb-2">
                 <h2 class="text-2xl font-bold" style="color: #a78bfa;">
                     <i class="fas fa-users"></i> Pedido em Grupo
                 </h2>
@@ -1226,37 +1226,65 @@
                 </button>
             </div>
 
-            <p class="text-gray-300 mb-5 text-sm">
-                Cada pessoa monta seu próprio item e tudo vai num pedido só! Copie o link abaixo e compartilhe com o grupo. 🎉
-            </p>
+            <!-- ETAPA 1: Pedir nome -->
+            <div id="group-step-1">
+                <p class="text-gray-300 mb-5 text-sm">
+                    Montem o pedido aqui neste celular, um de cada vez. No final, tudo vai em uma única mensagem pro WhatsApp! 🎉
+                </p>
+                <label class="form-label">Qual é o seu nome?</label>
+                <input type="text" id="group-person-name" class="form-input" placeholder="Ex: João, Maria..." maxlength="30"
+                       onkeydown="if(event.key==='Enter') startGroupPerson()">
+                <button onclick="startGroupPerson()" class="btn-primary w-full justify-center mt-2">
+                    <i class="fas fa-arrow-right"></i> Montar meus itens
+                </button>
 
-            <!-- Link compartilhável -->
-            <label class="form-label">🔗 Link do Grupo:</label>
-            <div class="group-link-box mb-4" id="group-link-display" onclick="copyGroupLink(this)">
-                <!-- preenchido via JS -->
+                <!-- Lista de pessoas já adicionadas -->
+                <div id="group-persons-list" style="display:none; margin-top:1.5rem;">
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="form-label" style="margin:0;">👥 No grupo até agora:</label>
+                        <span id="group-count-badge" style="background:rgba(167,139,250,0.2); border:1px solid rgba(167,139,250,0.4); color:#a78bfa; padding:0.2rem 0.75rem; border-radius:20px; font-size:0.8rem; font-weight:700;"></span>
+                    </div>
+                    <div id="group-persons-cards"></div>
+
+                    <button onclick="finalizeGroupOrder()" class="btn-primary w-full justify-center mt-4" style="background:linear-gradient(135deg,#25D366,#128C7E);">
+                        <i class="fab fa-whatsapp"></i> Enviar Pedido do Grupo
+                    </button>
+                    <button onclick="clearGroupOrder()" class="text-red-400 hover:text-red-300 w-full text-center py-2 mt-2 text-sm">
+                        <i class="fas fa-trash"></i> Recomeçar grupo
+                    </button>
+                </div>
             </div>
-            <button onclick="copyGroupLink(document.getElementById('group-link-display'))"
-                    class="btn-primary w-full justify-center mb-6" style="padding: 0.8rem;">
-                <i class="fas fa-copy"></i> Copiar Link para Compartilhar
-            </button>
 
-            <!-- Nome do participante -->
-            <label class="form-label">Seu nome no grupo:</label>
-            <input type="text" id="group-person-name" class="form-input" placeholder="Ex: João, Maria..." maxlength="30">
+            <!-- ETAPA 2: Carrinho da pessoa atual (aparece após digitar o nome) -->
+            <div id="group-step-2" style="display:none;">
+                <div class="flex items-center gap-2 mb-4">
+                    <span style="font-size:1.5rem;">👤</span>
+                    <div>
+                        <p class="text-white font-bold text-lg" id="group-current-person-label"></p>
+                        <p class="text-gray-400 text-xs">Feche este painel, monte seus itens no cardápio e volte aqui!</p>
+                    </div>
+                </div>
 
-            <p class="text-sm text-gray-400 mb-4">
-                Após informar seu nome, selecione os itens normalmente pelo cardápio. Quando todos estiverem prontos, o organizador envia o pedido!
-            </p>
+                <div style="background:rgba(167,139,250,0.08); border:1px solid rgba(167,139,250,0.25); border-radius:12px; padding:1rem; margin-bottom:1rem;">
+                    <p class="text-sm font-semibold mb-1" style="color:#a78bfa;"><i class="fas fa-info-circle"></i> Como funciona:</p>
+                    <ol style="color:#d1d5db; font-size:0.85rem; padding-left:1.25rem; line-height:1.8;">
+                        <li>Feche este painel (botão X acima)</li>
+                        <li>Escolha os itens normalmente no cardápio</li>
+                        <li>Quando terminar, abra <strong style="color:#a78bfa;">Pedido em Grupo</strong> de novo</li>
+                        <li>Clique em <strong style="color:#a78bfa;">"Confirmar meus itens"</strong></li>
+                    </ol>
+                </div>
 
-            <!-- Participantes já adicionados -->
-            <div id="group-persons-list" style="display:none;">
-                <label class="form-label">👥 Pessoas no grupo:</label>
-                <div id="group-persons-cards"></div>
+                <!-- Prévia do carrinho atual -->
+                <div id="group-step-2-preview" class="mb-4"></div>
+
+                <button onclick="confirmGroupPerson()" class="btn-primary w-full justify-center" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);">
+                    <i class="fas fa-check"></i> Confirmar meus itens
+                </button>
+                <button onclick="cancelGroupPerson()" class="text-gray-400 hover:text-gray-300 w-full text-center py-2 mt-2 text-sm">
+                    Cancelar — voltar
+                </button>
             </div>
-
-            <button onclick="finalizeGroupOrder()" class="btn-primary w-full justify-center mt-4">
-                <i class="fab fa-whatsapp"></i> Enviar Pedido do Grupo
-            </button>
         </div>
     </div>
 
@@ -1320,33 +1348,23 @@
         let currentModalBasePrice = 0;
 
         // ─── #9 PEDIDO EM GRUPO ────────────────────────────────────────────────
-        let groupMode = false;
-        let groupPersonName = '';
-        let groupCart = {}; // { nomePessoa: [itens] }
-        let groupId = '';
-
-        function generateGroupId() {
-            return Math.random().toString(36).substr(2, 8).toUpperCase();
-        }
+        // Fluxo: um celular, várias pessoas, cada uma monta seus itens na vez dela.
+        // groupCart = { "João": [itens], "Maria": [itens], ... }
+        let groupCart        = {};
+        let groupCurrentName = '';   // nome de quem está montando agora
 
         function openGroupModal() {
-            // Carrega grupo existente da URL ou cria novo
-            const urlParams = new URLSearchParams(window.location.search);
-            const existingGroup = urlParams.get('grupo');
-            if (existingGroup) {
-                groupId = existingGroup;
-                const saved = localStorage.getItem(`group_${groupId}`);
-                if (saved) {
-                    try { groupCart = JSON.parse(saved); } catch(e) { groupCart = {}; }
-                }
+            // Restaura grupo salvo na sessão (recargas não perdem)
+            const saved = sessionStorage.getItem('simpleSaborGroupCart');
+            if (saved) { try { groupCart = JSON.parse(saved); } catch(e) { groupCart = {}; } }
+
+            // Decide qual etapa mostrar
+            if (groupCurrentName) {
+                showGroupStep2();
             } else {
-                if (!groupId) groupId = generateGroupId();
+                showGroupStep1();
             }
 
-            const link = `${window.location.origin}${window.location.pathname}?grupo=${groupId}`;
-            document.getElementById('group-link-display').textContent = link;
-
-            renderGroupPersons();
             document.getElementById('group-modal').classList.add('active');
             updateBodyScroll();
         }
@@ -1356,74 +1374,134 @@
             updateBodyScroll();
         }
 
-        function copyGroupLink(el) {
-            const text = el.textContent.trim();
-            navigator.clipboard.writeText(text).then(() => {
-                showToast('🔗 Link copiado!');
-            }).catch(() => {
-                // fallback
-                const ta = document.createElement('textarea');
-                ta.value = text;
-                document.body.appendChild(ta);
-                ta.select();
-                document.execCommand('copy');
-                document.body.removeChild(ta);
-                showToast('🔗 Link copiado!');
-            });
+        function showGroupStep1() {
+            document.getElementById('group-step-1').style.display = 'block';
+            document.getElementById('group-step-2').style.display = 'none';
+            document.getElementById('group-person-name').value = '';
+            renderGroupPersonsList();
         }
 
-        function renderGroupPersons() {
-            const list    = document.getElementById('group-persons-list');
-            const cards   = document.getElementById('group-persons-cards');
+        function showGroupStep2() {
+            document.getElementById('group-step-1').style.display = 'none';
+            document.getElementById('group-step-2').style.display = 'block';
+            document.getElementById('group-current-person-label').textContent = groupCurrentName + ', é sua vez!';
+            renderGroupStep2Preview();
+        }
+
+        function startGroupPerson() {
+            const nameInput = document.getElementById('group-person-name');
+            const name = nameInput.value.trim();
+            if (!name) { nameInput.focus(); showToast('⚠️ Digite seu nome primeiro!'); return; }
+            if (groupCart[name]) {
+                showToast('⚠️ Este nome já foi adicionado!');
+                return;
+            }
+            groupCurrentName = name;
+            // Limpa o carrinho para a nova pessoa montar do zero
+            cart = [];
+            updateCart();
+            document.getElementById('cart-button').style.display = 'none';
+            showGroupStep2();
+        }
+
+        function renderGroupStep2Preview() {
+            const el = document.getElementById('group-step-2-preview');
+            if (!cart.length) {
+                el.innerHTML = '<p class="text-gray-500 text-sm text-center py-2">Nenhum item ainda — feche e escolha no cardápio 👆</p>';
+                return;
+            }
+            const subtotal = cart.reduce((s, i) => s + Number(i.preco) * Number(i.quantity), 0);
+            el.innerHTML = `
+                <p class="form-label mb-2">🛒 Itens selecionados:</p>
+                <div style="background:#1a1a1a; border-radius:10px; padding:0.75rem; margin-bottom:0.5rem;">
+                    ${cart.map(i => `<p class="text-sm text-gray-300">${i.quantity}x ${i.nome} — ${formatBRL(i.preco * i.quantity)}</p>`).join('')}
+                </div>
+                <p class="text-right font-bold" style="color:#a78bfa;">Subtotal: ${formatBRL(subtotal)}</p>
+            `;
+        }
+
+        function confirmGroupPerson() {
+            if (!cart.length) {
+                showToast('⚠️ Adicione pelo menos um item antes de confirmar!');
+                return;
+            }
+            // Salva itens da pessoa atual
+            groupCart[groupCurrentName] = [...cart];
+            sessionStorage.setItem('simpleSaborGroupCart', JSON.stringify(groupCart));
+
+            showToast('✅ ' + groupCurrentName + ' adicionado ao grupo!');
+            groupCurrentName = '';
+
+            // Limpa carrinho para a próxima pessoa
+            cart = [];
+            updateCart();
+            document.getElementById('cart-button').style.display = 'none';
+
+            showGroupStep1();
+        }
+
+        function cancelGroupPerson() {
+            groupCurrentName = '';
+            // Restaura carrinho vazio (não tinha itens antes)
+            cart = [];
+            updateCart();
+            document.getElementById('cart-button').style.display = 'none';
+            showGroupStep1();
+        }
+
+        function renderGroupPersonsList() {
+            const listEl  = document.getElementById('group-persons-list');
+            const cardsEl = document.getElementById('group-persons-cards');
+            const badge   = document.getElementById('group-count-badge');
             const persons = Object.keys(groupCart);
 
-            if (!persons.length) { list.style.display = 'none'; return; }
+            if (!persons.length) { listEl.style.display = 'none'; return; }
 
-            list.style.display = 'block';
-            cards.innerHTML = persons.map(name => {
-                const items = groupCart[name] || [];
-                const total = items.reduce((s, i) => s + Number(i.preco) * Number(i.quantity), 0);
+            listEl.style.display = 'block';
+            badge.textContent = persons.length + (persons.length === 1 ? ' pessoa' : ' pessoas');
+
+            cardsEl.innerHTML = persons.map(name => {
+                const items    = groupCart[name] || [];
+                const subtotal = items.reduce((s, i) => s + Number(i.preco) * Number(i.quantity), 0);
                 return `
                     <div class="group-person-card">
-                        <p class="person-name">👤 ${name}</p>
-                        <div class="person-items">
-                            ${items.map(i => `${i.quantity}x ${i.nome} — ${formatBRL(i.preco * i.quantity)}`).join('<br>')}
+                        <div class="flex justify-between items-start">
+                            <p class="person-name">👤 ${name}</p>
+                            <button onclick="removeGroupPerson('${name}')" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:0.9rem;" title="Remover">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
-                        <p class="text-orange-400 font-bold text-sm mt-1">Total: ${formatBRL(total)}</p>
+                        <div class="person-items">
+                            ${items.map(i => `${i.quantity}x ${i.nome}${i.adicionais?.length ? ' (+' + i.adicionais.join(', ') + ')' : ''}`).join('<br>')}
+                        </div>
+                        <p style="color:#a78bfa; font-weight:700; font-size:0.85rem; margin-top:0.4rem;">Subtotal: ${formatBRL(subtotal)}</p>
                     </div>
                 `;
             }).join('');
         }
 
-        function saveGroupToStorage() {
-            if (groupId) localStorage.setItem(`group_${groupId}`, JSON.stringify(groupCart));
+        function removeGroupPerson(name) {
+            delete groupCart[name];
+            sessionStorage.setItem('simpleSaborGroupCart', JSON.stringify(groupCart));
+            renderGroupPersonsList();
         }
 
-        function addPersonItemsToGroup() {
-            const nameInput = document.getElementById('group-person-name');
-            const name = nameInput.value.trim();
-            if (!name) { alert('Informe seu nome no grupo!'); return; }
-            if (!cart.length) { alert('Seu carrinho está vazio. Adicione itens primeiro!'); return; }
-
-            groupPersonName = name;
-            groupCart[name] = [...cart];
-            saveGroupToStorage();
-            renderGroupPersons();
-            showToast(`✅ ${name} adicionado ao grupo!`);
+        function clearGroupOrder() {
+            showConfirmModal('Deseja apagar o pedido de grupo inteiro?', () => {
+                groupCart = {};
+                groupCurrentName = '';
+                sessionStorage.removeItem('simpleSaborGroupCart');
+                cart = [];
+                updateCart();
+                document.getElementById('cart-button').style.display = 'none';
+                renderGroupPersonsList();
+            });
         }
 
         function finalizeGroupOrder() {
-            // Adiciona quem estiver com carrinho atual e nome preenchido
-            const nameInput = document.getElementById('group-person-name');
-            const name = nameInput.value.trim();
-            if (name && cart.length) {
-                groupCart[name] = [...cart];
-                saveGroupToStorage();
-            }
-
             const persons = Object.keys(groupCart);
             if (!persons.length) {
-                alert('Nenhum item no pedido de grupo ainda!');
+                showToast('⚠️ Nenhuma pessoa adicionada ainda!');
                 return;
             }
 
@@ -1432,7 +1510,7 @@
 
             let totalGeral = 0;
             persons.forEach(pname => {
-                const items = groupCart[pname] || [];
+                const items         = groupCart[pname] || [];
                 const subtotalPessoa = items.reduce((s, i) => s + Number(i.preco) * Number(i.quantity), 0);
                 totalGeral += subtotalPessoa;
 
@@ -1446,12 +1524,26 @@
             });
 
             msg += '====================================\n';
-            msg += `*TOTAL GERAL: ${formatMoneyDot(totalGeral)}*\n\n`;
-            msg += '⏰ Terça a Domingo, 19:00 às 23:30 (Brasília)\n';
+            msg += `*TOTAL GERAL: ${formatMoneyDot(totalGeral)}*\n`;
+            msg += `*(${persons.length} pessoa${persons.length > 1 ? 's' : ''})*\n\n`;
+            msg += '⏰ Terça a Domingo, 19:00 às 23:30 (horário de Brasília)\n';
             msg += '📍 Rua Cassilândia, 1068 — Chapadão do Sul, MS';
 
             window.open(`https://wa.me/5567999496825?text=${encodeURIComponent(msg)}`, '_blank');
-            closeGroupModal();
+
+            setTimeout(() => {
+                showConfirmModal('Pedido em grupo enviado! Deseja encerrar o grupo?', () => {
+                    groupCart = {};
+                    groupCurrentName = '';
+                    sessionStorage.removeItem('simpleSaborGroupCart');
+                    cart = [];
+                    updateCart();
+                    document.getElementById('cart-button').style.display = 'none';
+                    closeGroupModal();
+                }, () => {
+                    closeGroupModal();
+                });
+            }, 600);
         }
 
         // ─── #1 COMBO BUILDER ─────────────────────────────────────────────────
@@ -1951,7 +2043,6 @@
 
         // ─── VERIFICAÇÃO HORÁRIO ──────────────────────────────────────────────────
         function isStoreClosed() {
-            return { closed: false};
             const now = new Date();
             const dayFormatter = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', weekday: 'short' });
             const dayStr = dayFormatter.format(now);
@@ -2487,23 +2578,6 @@
             }
         }
 
-        // ─── VERIFICAÇÃO DE GRUPO NA URL ──────────────────────────────────────────
-        function checkGroupFromUrl() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const gid = urlParams.get('grupo');
-            if (gid) {
-                groupId = gid;
-                const saved = localStorage.getItem(`group_${gid}`);
-                if (saved) {
-                    try { groupCart = JSON.parse(saved); } catch(e) {}
-                }
-                // Mostra aviso que está participando de um grupo
-                setTimeout(() => {
-                    showToast('👥 Você está num pedido em grupo! Adicione seus itens e clique em "Pedido em Grupo".');
-                }, 1500);
-            }
-        }
-
         // ─── INICIALIZAÇÃO ─────────────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
             loadCart();
@@ -2513,7 +2587,6 @@
             updateStatusBadge();
             updateFomoBanner();
             checkLastOrder();
-            checkGroupFromUrl();
 
             if (cart.length > 0) {
                 document.getElementById('cart-button').style.display = 'flex';
