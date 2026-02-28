@@ -1226,7 +1226,7 @@
                 </button>
             </div>
 
-            <!-- ETAPA 1: Pedir nome -->
+            <!-- ETAPA 1: Pedir nome + lista do grupo -->
             <div id="group-step-1">
                 <p class="text-gray-300 mb-5 text-sm">
                     Montem o pedido aqui neste celular, um de cada vez. No final, tudo vai em uma única mensagem pro WhatsApp! 🎉
@@ -1246,8 +1246,8 @@
                     </div>
                     <div id="group-persons-cards"></div>
 
-                    <button onclick="finalizeGroupOrder()" class="btn-primary w-full justify-center mt-4" style="background:linear-gradient(135deg,#25D366,#128C7E);">
-                        <i class="fab fa-whatsapp"></i> Enviar Pedido do Grupo
+                    <button onclick="showGroupStep3()" class="btn-primary w-full justify-center mt-4" style="background:linear-gradient(135deg,#25D366,#128C7E);">
+                        <i class="fas fa-arrow-right"></i> Todos prontos — Finalizar pedido
                     </button>
                     <button onclick="clearGroupOrder()" class="text-red-400 hover:text-red-300 w-full text-center py-2 mt-2 text-sm">
                         <i class="fas fa-trash"></i> Recomeçar grupo
@@ -1255,7 +1255,7 @@
                 </div>
             </div>
 
-            <!-- ETAPA 2: Carrinho da pessoa atual (aparece após digitar o nome) -->
+            <!-- ETAPA 2: Carrinho da pessoa atual -->
             <div id="group-step-2" style="display:none;">
                 <div class="flex items-center gap-2 mb-4">
                     <span style="font-size:1.5rem;">👤</span>
@@ -1283,6 +1283,53 @@
                 </button>
                 <button onclick="cancelGroupPerson()" class="text-gray-400 hover:text-gray-300 w-full text-center py-2 mt-2 text-sm">
                     Cancelar — voltar
+                </button>
+            </div>
+
+            <!-- ETAPA 3: Entrega, pagamento e envio -->
+            <div id="group-step-3" style="display:none;">
+                <div class="flex items-center gap-2 mb-4">
+                    <button onclick="showGroupStep1()" class="text-gray-400 hover:text-white text-sm flex items-center gap-1">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </button>
+                </div>
+
+                <p class="text-white font-bold mb-4">📦 Informações de Entrega e Pagamento</p>
+
+                <label class="form-label">Forma de Entrega:</label>
+                <select id="group-delivery-method" class="form-select" onchange="toggleGroupDeliveryFields()">
+                    <option value="">Selecione...</option>
+                    <option value="retirada">🛍️ Retirada no Local</option>
+                    <option value="delivery">🏍️ Delivery</option>
+                </select>
+
+                <label class="form-label">Nome do Responsável:</label>
+                <input type="text" id="group-customer-name" class="form-input" placeholder="Quem está fazendo o pedido">
+
+                <label class="form-label">Telefone:</label>
+                <input type="tel" id="group-customer-phone" class="form-input" placeholder="(67) 99999-9999" maxlength="15" inputmode="numeric"
+                       oninput="applyPhoneMask(this)" onblur="applyPhoneMask(this)">
+
+                <div id="group-delivery-address-field" style="display:none;">
+                    <label class="form-label">Endereço para Entrega:</label>
+                    <input type="text" id="group-delivery-address" class="form-input" placeholder="Rua, número, bairro...">
+                </div>
+
+                <label class="form-label">Forma de Pagamento:</label>
+                <select id="group-payment-method" class="form-select" onchange="toggleGroupTrocoField()">
+                    <option value="">Selecione...</option>
+                    <option value="pix">💰 PIX</option>
+                    <option value="cartao">💳 Cartão</option>
+                    <option value="dinheiro">💵 Dinheiro</option>
+                </select>
+
+                <div id="group-troco-field" style="display:none;">
+                    <label class="form-label">Troco para quanto?</label>
+                    <input type="text" id="group-troco-value" class="form-input" placeholder="Ex: R$ 100 (ou 'Sem troco')">
+                </div>
+
+                <button onclick="finalizeGroupOrder()" class="btn-primary w-full justify-center mt-4" style="background:linear-gradient(135deg,#25D366,#128C7E); font-size:1.1rem;">
+                    <i class="fab fa-whatsapp"></i> Enviar Pedido do Grupo
                 </button>
             </div>
         </div>
@@ -1377,6 +1424,7 @@
         function showGroupStep1() {
             document.getElementById('group-step-1').style.display = 'block';
             document.getElementById('group-step-2').style.display = 'none';
+            document.getElementById('group-step-3').style.display = 'none';
             document.getElementById('group-person-name').value = '';
             renderGroupPersonsList();
         }
@@ -1384,8 +1432,30 @@
         function showGroupStep2() {
             document.getElementById('group-step-1').style.display = 'none';
             document.getElementById('group-step-2').style.display = 'block';
+            document.getElementById('group-step-3').style.display = 'none';
             document.getElementById('group-current-person-label').textContent = groupCurrentName + ', é sua vez!';
             renderGroupStep2Preview();
+        }
+
+        function showGroupStep3() {
+            const persons = Object.keys(groupCart);
+            if (!persons.length) { showToast('⚠️ Nenhuma pessoa adicionada ainda!'); return; }
+            document.getElementById('group-step-1').style.display = 'none';
+            document.getElementById('group-step-2').style.display = 'none';
+            document.getElementById('group-step-3').style.display = 'block';
+        }
+
+        function toggleGroupDeliveryFields() {
+            const method = document.getElementById('group-delivery-method').value;
+            document.getElementById('group-delivery-address-field').style.display =
+                method === 'delivery' ? 'block' : 'none';
+        }
+
+        function toggleGroupTrocoField() {
+            const payment = document.getElementById('group-payment-method').value;
+            document.getElementById('group-troco-field').style.display =
+                payment === 'dinheiro' ? 'block' : 'none';
+            if (payment !== 'dinheiro') document.getElementById('group-troco-value').value = '';
         }
 
         function startGroupPerson() {
@@ -1500,32 +1570,98 @@
 
         function finalizeGroupOrder() {
             const persons = Object.keys(groupCart);
-            if (!persons.length) {
-                showToast('⚠️ Nenhuma pessoa adicionada ainda!');
-                return;
+            if (!persons.length) { showToast('⚠️ Nenhuma pessoa adicionada ainda!'); return; }
+
+            // Validações etapa 3
+            const method  = document.getElementById('group-delivery-method')?.value || '';
+            const name    = document.getElementById('group-customer-name')?.value.trim() || '';
+            const phone   = document.getElementById('group-customer-phone')?.value.trim() || '';
+            const payment = document.getElementById('group-payment-method')?.value || '';
+
+            if (!method)  { alert('Selecione a forma de entrega!');  return; }
+            if (!name)    { alert('Informe o nome do responsável!'); return; }
+            if (!phone)   { alert('Informe o telefone!');            return; }
+            if (normalizePhoneDigits(phone).length !== 11) { alert('Telefone inválido. Use o padrão (00) 00000-0000'); return; }
+            if (method === 'delivery') {
+                const addr = document.getElementById('group-delivery-address')?.value.trim() || '';
+                if (!addr) { alert('Informe o endereço para entrega!'); return; }
+            }
+            if (!payment) { alert('Selecione a forma de pagamento!'); return; }
+            if (payment === 'dinheiro') {
+                const troco = document.getElementById('group-troco-value')?.value.trim() || '';
+                if (!troco) { alert('Informe se precisa de troco!'); return; }
             }
 
             let msg = '*PEDIDO EM GRUPO — SIMPLÊ SABOR* 👥🍟\n\n';
+            msg += 'Olá! Gostaria de fazer um pedido em grupo:\n\n';
             msg += '====================================\n\n';
 
-            let totalGeral = 0;
+            let itemCounter = 1;
+            let totalGeral  = 0;
+
             persons.forEach(pname => {
-                const items         = groupCart[pname] || [];
+                const items = groupCart[pname] || [];
+                if (!items.length) return;
+
                 const subtotalPessoa = items.reduce((s, i) => s + Number(i.preco) * Number(i.quantity), 0);
                 totalGeral += subtotalPessoa;
 
-                msg += `👤 *${pname}*\n`;
+                msg += `👤 *Pedido de ${pname}*\n\n`;
+
                 items.forEach(item => {
-                    msg += `   ${item.quantity}x ${item.nome} — ${formatMoneyDot(item.preco * item.quantity)}\n`;
-                    if (item.adicionais?.length) msg += `   +Adicionais: ${item.adicionais.join(', ')}\n`;
-                    if (item.obs) msg += `   Obs: ${item.obs}\n`;
+                    const qty       = Number(item.quantity || 1);
+                    const precoBase = Number(item.precoBase || item.preco || 0);
+                    const precoUnit = Number(item.preco || 0);
+                    const totalItem = precoUnit * qty;
+                    const temAdicionais = Array.isArray(item.adicionais) && item.adicionais.length > 0;
+
+                    msg += `${itemCounter}. *${item.nome}*\n`;
+                    if (temAdicionais) {
+                        msg += `   Qtd: ${qty} x ${formatMoneyDot(precoBase)}\n`;
+                        item.adicionais.forEach(n => {
+                            const p = getAdicionalPrecoByNome(n);
+                            msg += `   +Adicionais: ${n}${p > 0 ? ' ' + formatMoneyDot(p) : ''}\n`;
+                        });
+                        if (item.obs) msg += `   Obs: ${item.obs}\n`;
+                        msg += `   Subtotal: ${formatMoneyDot(totalItem)}\n\n`;
+                    } else {
+                        msg += `   Qtd: ${qty} x ${formatMoneyDot(precoBase)} = ${formatMoneyDot(totalItem)}\n`;
+                        if (item.obs) msg += `   Obs: ${item.obs}\n`;
+                        msg += '\n';
+                    }
+                    itemCounter++;
                 });
-                msg += `   Subtotal: ${formatMoneyDot(subtotalPessoa)}\n\n`;
+
+                msg += `   *Subtotal de ${pname}: ${formatMoneyDot(subtotalPessoa)}*\n`;
+                msg += '------------------------------------\n\n';
             });
 
-            msg += '====================================\n';
-            msg += `*TOTAL GERAL: ${formatMoneyDot(totalGeral)}*\n`;
+            const fee   = method === 'delivery' ? DELIVERY_FEE : 0;
+            const total = totalGeral + fee;
+            const deliveryLabels = { retirada: 'Retirada no Local', delivery: 'Delivery' };
+            const paymentLabels  = { pix: 'PIX', cartao: 'Cartão', dinheiro: 'Dinheiro' };
+
+            msg += '====================================\n\n';
+            msg += '*RESUMO DO GRUPO*\n';
+            msg += `Subtotal: ${formatMoneyDot(totalGeral)}\n`;
+            msg += `Taxa de entrega: ${formatMoneyDot(fee)}\n`;
+            msg += `*TOTAL GERAL: ${formatMoneyDot(total)}*\n`;
             msg += `*(${persons.length} pessoa${persons.length > 1 ? 's' : ''})*\n\n`;
+            msg += `*ENTREGA:* ${deliveryLabels[method]}\n`;
+            msg += `*RESPONSÁVEL:* ${name}\n`;
+            msg += `*TELEFONE:* ${phone}\n`;
+            if (method === 'delivery') {
+                const addr = document.getElementById('group-delivery-address')?.value.trim() || '';
+                msg += `*ENDEREÇO:* ${addr}\n`;
+            } else {
+                msg += `*RETIRAR EM:* Rua Cassilândia, 1068, Chapadão do Sul, MS\n`;
+            }
+            msg += `*PAGAMENTO:* ${paymentLabels[payment] || payment}\n`;
+            if (payment === 'dinheiro') {
+                const troco = document.getElementById('group-troco-value')?.value.trim() || '';
+                msg += `*TROCO PARA:* ${troco}\n`;
+            }
+            msg += '\n====================================\n';
             msg += '⏰ Terça a Domingo, 19:00 às 23:30 (horário de Brasília)\n';
             msg += '📍 Rua Cassilândia, 1068 — Chapadão do Sul, MS';
 
@@ -1539,10 +1675,14 @@
                     cart = [];
                     updateCart();
                     document.getElementById('cart-button').style.display = 'none';
+                    // Limpa campos etapa 3
+                    ['group-delivery-method','group-customer-name','group-customer-phone',
+                     'group-delivery-address','group-payment-method','group-troco-value'
+                    ].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+                    document.getElementById('group-delivery-address-field').style.display = 'none';
+                    document.getElementById('group-troco-field').style.display = 'none';
                     closeGroupModal();
-                }, () => {
-                    closeGroupModal();
-                });
+                }, () => { closeGroupModal(); });
             }, 600);
         }
 
@@ -2043,7 +2183,6 @@
 
         // ─── VERIFICAÇÃO HORÁRIO ──────────────────────────────────────────────────
         function isStoreClosed() {
-            return { closed: false};
             const now = new Date();
             const dayFormatter = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', weekday: 'short' });
             const dayStr = dayFormatter.format(now);
