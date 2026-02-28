@@ -1008,36 +1008,37 @@
     <section class="combo-builder-section" style="padding: 4rem 1rem;">
         <div class="container mx-auto px-4" style="max-width: 960px;">
             <h2 class="section-title">🍟 Monte seu Combo</h2>
-            <p class="text-center text-gray-300 mb-8">Escolha seu lanche, personalize e adicione uma bebida. Simples assim!</p>
+            <p class="text-center text-gray-300 mb-2">Escolha um cachorro quente e/ou um crepe, adicione extras e uma bebida!</p>
+            <p class="text-center text-sm mb-8" style="color: var(--cor-laranja-claro);">Cada item selecionado vai separado no carrinho 🛒</p>
 
-            <!-- Passo 1a: Cachorro Quente -->
+            <!-- Passo 1: Cachorro Quente (opcional) -->
             <p class="form-label text-center mb-3" style="font-size: 1rem; color: var(--cor-laranja);">
-                <i class="fas fa-hotdog"></i> 1. Cachorro Quente
+                <i class="fas fa-hotdog"></i> 1. Cachorro Quente <span style="font-weight:400; color:#6b7280;">(opcional — clique para selecionar/desmarcar)</span>
             </p>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5" id="combo-lanche-grid"></div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4" id="combo-lanche-grid"></div>
 
-            <!-- Passo 1b: Crepe -->
-            <p class="form-label text-center mb-3" style="font-size: 1rem; color: #34d399;">
-                <i class="fas fa-pizza-slice"></i> ou Crepe
-            </p>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-5" id="combo-crepe-grid"></div>
-
-            <!-- Adicionais (só aparece quando lanche é cachorro quente) -->
-            <div id="combo-adicionais-section" style="display:none;">
-                <p class="form-label text-center mb-3" style="font-size: 1rem; color: var(--cor-laranja-claro);">
-                    <i class="fas fa-plus-circle"></i> Adicionais (opcional)
+            <!-- Adicionais — sempre visível, mas habilitado só quando cachorro quente selecionado -->
+            <div id="combo-adicionais-section">
+                <p class="form-label text-center mb-3" style="font-size: 0.9rem; color: var(--cor-laranja-claro);">
+                    <i class="fas fa-plus-circle"></i> Adicionais para o Dog <span id="combo-adic-hint" style="font-weight:400; color:#6b7280;">(selecione um Dog acima para habilitar)</span>
                 </p>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="combo-adicionais-grid"></div>
             </div>
 
-            <!-- Passo 2: Bebida — TODAS exibidas em scroll horizontal no mobile -->
-            <p class="form-label text-center mb-3" style="font-size: 1rem; color: #60a5fa;">
-                <i class="fas fa-glass-water"></i> 2. Bebida (opcional)
+            <!-- Passo 2: Crepe (opcional) -->
+            <p class="form-label text-center mb-3" style="font-size: 1rem; color: #34d399;">
+                <i class="fas fa-pizza-slice"></i> 2. Crepe <span style="font-weight:400; color:#6b7280;">(opcional — clique para selecionar/desmarcar)</span>
             </p>
-            <div id="combo-bebida-scroll-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 0.5rem; margin-bottom: 1.5rem;">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6" id="combo-crepe-grid"></div>
+
+            <!-- Passo 3: Bebida — scroll horizontal com TODAS -->
+            <p class="form-label text-center mb-3" style="font-size: 1rem; color: #60a5fa;">
+                <i class="fas fa-glass-water"></i> 3. Bebida <span style="font-weight:400; color:#6b7280;">(opcional — clique para selecionar/desmarcar)</span>
+            </p>
+            <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 0.5rem; margin-bottom: 0.25rem;">
                 <div id="combo-bebida-grid" style="display:flex; gap: 0.75rem; min-width: max-content; padding: 0.25rem 0.1rem;"></div>
             </div>
-            <p class="text-center text-xs text-gray-500 mb-6" style="margin-top:-1rem;">← Role para ver todas as bebidas →</p>
+            <p class="text-center text-xs text-gray-500 mb-8">← Role para ver todas as bebidas →</p>
 
             <!-- Preview do Combo -->
             <div class="combo-preview" id="combo-preview">
@@ -1094,7 +1095,7 @@
     </section>
 
     <!-- Botão Carrinho Flutuante -->
-    <button id="cart-button" class="btn-primary" onclick="toggleCart()" style="display: none; position: relative; overflow: hidden;">
+    <button id="cart-button" class="btn-primary" onclick="toggleCart()" style="display: none;">
         <i class="fas fa-shopping-cart"></i>
         <span id="cart-count" class="cart-badge">0</span>
     </button>
@@ -1454,21 +1455,23 @@
         }
 
         // ─── #1 COMBO BUILDER ─────────────────────────────────────────────────
-        let comboSelectedLanche  = null;  // { id, nome, preco, isCachorroQuente }
+        // Seleção independente por categoria: dog + crepe + bebida
+        let comboSelectedLanche  = null;  // { id, nome, preco }
+        let comboSelectedCrepe   = null;  // { id, nome, preco }
         let comboSelectedBebida  = null;  // { id, nome, preco }
         let comboAdicionaisSel   = [];    // [{ id, nome, preco }]
 
         function renderComboBuilder() {
-            const lancheGrid   = document.getElementById('combo-lanche-grid');
-            const crepeGrid    = document.getElementById('combo-crepe-grid');
-            const bebidaGrid   = document.getElementById('combo-bebida-grid');
-            const adicGrid     = document.getElementById('combo-adicionais-grid');
+            const lancheGrid = document.getElementById('combo-lanche-grid');
+            const crepeGrid  = document.getElementById('combo-crepe-grid');
+            const bebidaGrid = document.getElementById('combo-bebida-grid');
+            const adicGrid   = document.getElementById('combo-adicionais-grid');
 
             // Cachorro Quente
             lancheGrid.innerHTML = produtos.lanches.map(p => `
                 <div class="combo-step" id="combo-lanche-${p.id}"
-                     onclick="selectComboLanche('${p.id}', '${p.nome.replace(/'/g,"\\'")}', ${p.preco}, true)">
-                    <span class="combo-check">✅</span>
+                     onclick="toggleComboLanche('${p.id}', '${p.nome.replace(/'/g,"\\'")}', ${p.preco})">
+                    <span class="combo-check">\u2705</span>
                     <span class="step-emoji">${p.emoji}</span>
                     <span class="step-name">${p.nome}</span>
                     <span class="step-price">${formatBRL(p.preco)}</span>
@@ -1477,31 +1480,32 @@
 
             // Crepes
             crepeGrid.innerHTML = produtos.crepes.map(p => `
-                <div class="combo-step" id="combo-lanche-${p.id}"
-                     onclick="selectComboLanche('${p.id}', '${p.nome.replace(/'/g,"\\'")}', ${p.preco}, false)">
-                    <span class="combo-check">✅</span>
+                <div class="combo-step" id="combo-crepe-${p.id}"
+                     onclick="toggleComboCrepe('${p.id}', '${p.nome.replace(/'/g,"\\'")}', ${p.preco})">
+                    <span class="combo-check">\u2705</span>
                     <span class="step-emoji">${p.emoji}</span>
                     <span class="step-name">${p.nome}</span>
                     <span class="step-price">${formatBRL(p.preco)}</span>
                 </div>
             `).join('');
 
-            // Adicionais (grid de chips, visível só para cachorro quente)
+            // Adicionais — desabilitados até selecionar um Dog
             adicGrid.innerHTML = adicionais.map(a => `
-                <div class="combo-step" id="combo-adic-${a.id}"
-                     onclick="toggleComboAdicional('${a.id}', '${a.nome}', ${a.preco})">
-                    <span class="combo-check">✅</span>
-                    <span class="step-emoji">➕</span>
+                <div class="combo-step combo-adic-item" id="combo-adic-${a.id}"
+                     onclick="toggleComboAdicional('${a.id}', '${a.nome}', ${a.preco})"
+                     style="opacity:0.4; pointer-events:none;">
+                    <span class="combo-check">\u2705</span>
+                    <span class="step-emoji">\u2795</span>
                     <span class="step-name">${a.nome}</span>
                     <span class="step-price">+${formatBRL(a.preco)}</span>
                 </div>
             `).join('');
 
-            // TODAS as bebidas em scroll horizontal
+            // Todas as bebidas em scroll horizontal
             bebidaGrid.innerHTML = produtos.bebidas.map(p => `
                 <div class="combo-step" id="combo-bebida-${p.id}"
-                     onclick="selectComboBebida('${p.id}', '${p.nome.replace(/'/g,"\\'")}', ${p.preco})">
-                    <span class="combo-check">✅</span>
+                     onclick="toggleComboBebida('${p.id}', '${p.nome.replace(/'/g,"\\'")}', ${p.preco})">
+                    <span class="combo-check">\u2705</span>
                     <span class="step-emoji">${p.emoji}</span>
                     <span class="step-name">${p.nome}</span>
                     <span class="step-price">${formatBRL(p.preco)}</span>
@@ -1509,24 +1513,52 @@
             `).join('');
         }
 
-        function selectComboLanche(id, nome, preco, isCachorroQuente) {
-            // Limpa seleção de TODOS os lanches (dogs + crepes usam mesmo prefixo "combo-lanche-")
-            document.querySelectorAll('[id^="combo-lanche-"]').forEach(el => el.classList.remove('selected'));
-            comboSelectedLanche = { id, nome, preco, isCachorroQuente };
-            document.getElementById(`combo-lanche-${id}`)?.classList.add('selected');
+        function toggleComboLanche(id, nome, preco) {
+            if (comboSelectedLanche && comboSelectedLanche.id === id) {
+                // Desmarca
+                document.getElementById(`combo-lanche-${id}`)?.classList.remove('selected');
+                comboSelectedLanche = null;
+                // Desabilita e limpa adicionais
+                comboAdicionaisSel = [];
+                document.querySelectorAll('.combo-adic-item').forEach(el => {
+                    el.classList.remove('selected');
+                    el.style.opacity = '0.4';
+                    el.style.pointerEvents = 'none';
+                });
+                document.getElementById('combo-adic-hint').textContent = '(selecione um Dog acima para habilitar)';
+            } else {
+                // Troca seleção
+                if (comboSelectedLanche) {
+                    document.getElementById(`combo-lanche-${comboSelectedLanche.id}`)?.classList.remove('selected');
+                    comboAdicionaisSel = [];
+                    document.querySelectorAll('.combo-adic-item').forEach(el => el.classList.remove('selected'));
+                }
+                comboSelectedLanche = { id, nome, preco };
+                document.getElementById(`combo-lanche-${id}`)?.classList.add('selected');
+                // Habilita adicionais
+                document.querySelectorAll('.combo-adic-item').forEach(el => {
+                    el.style.opacity = '1';
+                    el.style.pointerEvents = 'auto';
+                });
+                document.getElementById('combo-adic-hint').textContent = '(opcional)';
+            }
+            updateComboPreview();
+        }
 
-            // Mostra/oculta adicionais conforme tipo
-            const adicSection = document.getElementById('combo-adicionais-section');
-            adicSection.style.display = isCachorroQuente ? 'block' : 'none';
-
-            // Limpa adicionais selecionados ao trocar de lanche
-            comboAdicionaisSel = [];
-            document.querySelectorAll('[id^="combo-adic-"]').forEach(el => el.classList.remove('selected'));
-
+        function toggleComboCrepe(id, nome, preco) {
+            if (comboSelectedCrepe && comboSelectedCrepe.id === id) {
+                document.getElementById(`combo-crepe-${id}`)?.classList.remove('selected');
+                comboSelectedCrepe = null;
+            } else {
+                if (comboSelectedCrepe) document.getElementById(`combo-crepe-${comboSelectedCrepe.id}`)?.classList.remove('selected');
+                comboSelectedCrepe = { id, nome, preco };
+                document.getElementById(`combo-crepe-${id}`)?.classList.add('selected');
+            }
             updateComboPreview();
         }
 
         function toggleComboAdicional(id, nome, preco) {
+            if (!comboSelectedLanche) return;
             const idx = comboAdicionaisSel.findIndex(a => a.id === id);
             const el  = document.getElementById(`combo-adic-${id}`);
             if (idx >= 0) {
@@ -1539,12 +1571,12 @@
             updateComboPreview();
         }
 
-        function selectComboBebida(id, nome, preco) {
+        function toggleComboBebida(id, nome, preco) {
             if (comboSelectedBebida && comboSelectedBebida.id === id) {
                 document.getElementById(`combo-bebida-${id}`)?.classList.remove('selected');
                 comboSelectedBebida = null;
             } else {
-                document.querySelectorAll('[id^="combo-bebida-"]').forEach(el => el.classList.remove('selected'));
+                if (comboSelectedBebida) document.getElementById(`combo-bebida-${comboSelectedBebida.id}`)?.classList.remove('selected');
                 comboSelectedBebida = { id, nome, preco };
                 document.getElementById(`combo-bebida-${id}`)?.classList.add('selected');
             }
@@ -1555,87 +1587,106 @@
             const preview = document.getElementById('combo-preview');
             const addBtn  = document.getElementById('combo-add-btn');
 
-            if (!comboSelectedLanche) {
-                preview.innerHTML = `<span class="preview-hint">Selecione itens acima para montar seu combo 👆</span>`;
+            const temAlgo = comboSelectedLanche || comboSelectedCrepe || comboSelectedBebida;
+            if (!temAlgo) {
+                preview.innerHTML = `<span class="preview-hint">Selecione itens acima para montar seu combo \u261d</span>`;
                 addBtn.style.display = 'none';
                 return;
             }
 
             const precoAdic = comboAdicionaisSel.reduce((s, a) => s + a.preco, 0);
-            const total = comboSelectedLanche.preco + precoAdic + (comboSelectedBebida ? comboSelectedBebida.preco : 0);
+            const total = (comboSelectedLanche ? comboSelectedLanche.preco + precoAdic : 0)
+                        + (comboSelectedCrepe  ? comboSelectedCrepe.preco  : 0)
+                        + (comboSelectedBebida ? comboSelectedBebida.preco : 0);
 
-            const emoji = comboSelectedLanche.isCachorroQuente ? '🌭' : '🥞';
-            let pillsHtml = `<span class="combo-item-pill">${emoji} ${comboSelectedLanche.nome}</span>`;
-            comboAdicionaisSel.forEach(a => {
-                pillsHtml += `<span class="combo-item-pill">➕ ${a.nome}</span>`;
-            });
-            if (comboSelectedBebida) pillsHtml += `<span class="combo-item-pill">🥤 ${comboSelectedBebida.nome}</span>`;
+            let pillsHtml = '';
+            if (comboSelectedLanche) pillsHtml += `<span class="combo-item-pill">\ud83c\udf2d ${comboSelectedLanche.nome}</span>`;
+            comboAdicionaisSel.forEach(a => { pillsHtml += `<span class="combo-item-pill">\u2795 ${a.nome}</span>`; });
+            if (comboSelectedCrepe)  pillsHtml += `<span class="combo-item-pill">\ud83e\udd5e ${comboSelectedCrepe.nome}</span>`;
+            if (comboSelectedBebida) pillsHtml += `<span class="combo-item-pill">\ud83e\udd64 ${comboSelectedBebida.nome}</span>`;
 
             preview.innerHTML = `
-                <div class="mb-2" style="flex-wrap:wrap; display:flex; justify-content:center;">${pillsHtml}</div>
-                <p class="preview-title mt-2">Seu Combo</p>
+                <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:0.25rem;" class="mb-3">${pillsHtml}</div>
+                <p class="preview-title">Seu Combo</p>
                 <p class="preview-price">${formatBRL(total)}</p>
-                ${comboSelectedBebida ? '<p class="text-green-400 text-xs mt-1 font-semibold">🎉 Combo completo!</p>' : '<p class="preview-hint mt-1">Adicione uma bebida para completar!</p>'}
             `;
-
             addBtn.style.display = 'inline-flex';
         }
 
         function addComboToCart() {
             if (showClosedModal()) return;
-            if (!comboSelectedLanche) { showToast('⚠️ Selecione um lanche!'); return; }
+            if (!comboSelectedLanche && !comboSelectedCrepe && !comboSelectedBebida) {
+                showToast('\u26a0\ufe0f Selecione pelo menos um item!');
+                return;
+            }
 
             playAddSound();
 
-            const precoAdic      = comboAdicionaisSel.reduce((s, a) => s + a.preco, 0);
-            const nomesAdicionais = comboAdicionaisSel.map(a => a.nome);
-
-            // Adiciona lanche (com adicionais se for cachorro quente)
-            cart.push({
-                id:                  `${comboSelectedLanche.id}_${Date.now()}`,
-                produtoId:           comboSelectedLanche.id,
-                nome:                comboSelectedLanche.nome,
-                preco:               comboSelectedLanche.preco + precoAdic,
-                precoBase:           comboSelectedLanche.preco,
-                precoAdicionais:     precoAdic,
-                quantity:            1,
-                obs:                 'Via Combo Builder',
-                adicionais:          nomesAdicionais,
-                unavailableForDelivery: false
-            });
-
-            // Adiciona bebida se selecionada
-            if (comboSelectedBebida) {
+            // Dog com adicionais
+            if (comboSelectedLanche) {
+                const precoAdic       = comboAdicionaisSel.reduce((s, a) => s + a.preco, 0);
+                const nomesAdicionais = comboAdicionaisSel.map(a => a.nome);
                 cart.push({
-                    id:              `${comboSelectedBebida.id}_${Date.now() + 1}`,
-                    produtoId:       comboSelectedBebida.id,
-                    nome:            comboSelectedBebida.nome,
-                    preco:           comboSelectedBebida.preco,
-                    precoBase:       comboSelectedBebida.preco,
-                    precoAdicionais: 0,
-                    quantity:        1,
-                    obs:             '',
-                    adicionais:      [],
-                    unavailableForDelivery: !!produtos.bebidas.find(b => b.id === comboSelectedBebida.id)?.unavailableForDelivery
+                    id: `${comboSelectedLanche.id}_${Date.now()}`,
+                    produtoId: comboSelectedLanche.id,
+                    nome: comboSelectedLanche.nome,
+                    preco: comboSelectedLanche.preco + precoAdic,
+                    precoBase: comboSelectedLanche.preco,
+                    precoAdicionais: precoAdic,
+                    quantity: 1, obs: 'Via Combo Builder',
+                    adicionais: nomesAdicionais, unavailableForDelivery: false
+                });
+            }
+
+            // Crepe
+            if (comboSelectedCrepe) {
+                cart.push({
+                    id: `${comboSelectedCrepe.id}_${Date.now() + 1}`,
+                    produtoId: comboSelectedCrepe.id,
+                    nome: comboSelectedCrepe.nome,
+                    preco: comboSelectedCrepe.preco, precoBase: comboSelectedCrepe.preco,
+                    precoAdicionais: 0, quantity: 1, obs: 'Via Combo Builder',
+                    adicionais: [], unavailableForDelivery: false
+                });
+            }
+
+            // Bebida
+            if (comboSelectedBebida) {
+                const prodB = produtos.bebidas.find(b => b.id === comboSelectedBebida.id);
+                cart.push({
+                    id: `${comboSelectedBebida.id}_${Date.now() + 2}`,
+                    produtoId: comboSelectedBebida.id,
+                    nome: comboSelectedBebida.nome,
+                    preco: comboSelectedBebida.preco, precoBase: comboSelectedBebida.preco,
+                    precoAdicionais: 0, quantity: 1, obs: '',
+                    adicionais: [], unavailableForDelivery: !!prodB?.unavailableForDelivery
                 });
             }
 
             updateCart();
             document.getElementById('cart-button').style.display = 'flex';
 
-            const total = comboSelectedLanche.preco + precoAdic + (comboSelectedBebida ? comboSelectedBebida.preco : 0);
-            showToast(`🎉 Combo adicionado! ${formatBRL(total)}`);
+            const precoAdic = comboAdicionaisSel.reduce((s, a) => s + a.preco, 0);
+            const total = (comboSelectedLanche ? comboSelectedLanche.preco + precoAdic : 0)
+                        + (comboSelectedCrepe  ? comboSelectedCrepe.preco  : 0)
+                        + (comboSelectedBebida ? comboSelectedBebida.preco : 0);
+            showToast(`\ud83c\udf89 Combo adicionado! ${formatBRL(total)}`);
 
-            // Reset completo
+            // Reset
             comboSelectedLanche = null;
+            comboSelectedCrepe  = null;
             comboSelectedBebida = null;
             comboAdicionaisSel  = [];
             document.querySelectorAll('.combo-step').forEach(el => el.classList.remove('selected'));
-            document.getElementById('combo-adicionais-section').style.display = 'none';
+            document.querySelectorAll('.combo-adic-item').forEach(el => {
+                el.style.opacity = '0.4';
+                el.style.pointerEvents = 'none';
+            });
+            document.getElementById('combo-adic-hint').textContent = '(selecione um Dog acima para habilitar)';
             updateComboPreview();
         }
 
-        // ─── #11 SOM DE FEEDBACK ────────────────────────────────────────────────
+                // ─── #11 SOM DE FEEDBACK ────────────────────────────────────────────────
         let audioCtx = null;
 
         function getAudioCtx() {
@@ -1900,7 +1951,6 @@
 
         // ─── VERIFICAÇÃO HORÁRIO ──────────────────────────────────────────────────
         function isStoreClosed() {
-            return { closed: false };
             const now = new Date();
             const dayFormatter = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', weekday: 'short' });
             const dayStr = dayFormatter.format(now);
