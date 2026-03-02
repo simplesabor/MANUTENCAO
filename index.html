@@ -880,6 +880,8 @@
 </head>
 <body>
 
+    <!-- Status da integração — visível só quando sistema online -->
+<div id="sistema-status" style="display:none; position:fixed; top:70px; right:12px; z-index:900; font-size:0.7rem; font-weight:700; padding:4px 10px; border-radius:20px; opacity:0.85; pointer-events:none; background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.4); color:#6ee7b7;">⚡ Pedido Direto</div>
     <!-- ══ BANNER FOMO ══ -->
     <div id="fomo-banner">
         ⏰ Corre! Fechamos em <span id="fomo-countdown">--</span> minutos! Finalize seu pedido agora! 🔥
@@ -1351,6 +1353,12 @@
     -->
 
     <script>
+        // ─── ⚙️ CONFIGURAÇÃO DA API ─────────────────────────────────────────────
+        // URL do Cloudflare Tunnel — atualize sempre que reiniciar o cloudflared
+        const SISTEMA_API_URL = "https://yen-imposed-wide-connecting.trycloudflare.com";
+        const SISTEMA_API_KEY = "simplesabor2025";
+        // ────────────────────────────────────────────────────────────────────────
+
         const DELIVERY_FEE = 7.00;
 
         const adicionais = [
@@ -1394,7 +1402,21 @@
         let cart = [];
         let currentModalBasePrice = 0;
 
-        // ─── #9 PEDIDO EM GRUPO ────────────────────────────────────────────────
+        let sistemaOnline = false;
+
+        // ─── VERIFICAÇÃO DO SISTEMA ─────────────────────────────────────────────
+        async function checkSistemaOnline() {
+            try {
+                const resp = await fetch(`${SISTEMA_API_URL}/teste`, { signal: AbortSignal.timeout(4000) });
+                sistemaOnline = resp.ok;
+            } catch(e) {
+                sistemaOnline = false;
+            }
+            const el = document.getElementById('sistema-status');
+            if (el) el.style.display = sistemaOnline ? 'block' : 'none';
+        }
+
+        // ─── #9 PEDIDO EM GRUPO
         // Fluxo: um celular, várias pessoas, cada uma monta seus itens na vez dela.
         // groupCart = { "João": [itens], "Maria": [itens], ... }
         let groupCart        = {};
@@ -2538,7 +2560,7 @@
         }
 
         // ─── ENVIO DO PEDIDO ──────────────────────────────────────────────────────
-        function sendOrder() {
+        async function sendOrder() {
             const method = document.getElementById('delivery-method')?.value || '';
             if (!method) { alert('Por favor, selecione a forma de entrega!'); return; }
 
@@ -2643,15 +2665,58 @@
             msg += '📍 Rua Cassilândia, 1068 — Chapadão do Sul, MS';
 
             saveCustomerData();
-            saveLastOrder(); // #3 — salva para "Peça de Novo"
+            saveLastOrder();
 
+            // ── Envia para o sistema (se online) ──
+            let sistemaOk = false;
+            if (sistemaOnline) {
+                try {
+                    const apiPayload = {
+                        api_key:         SISTEMA_API_KEY,
+                        name,
+                        phone,
+                        delivery_method: method,
+                        address:         method === 'delivery' ? (document.getElementById('delivery-address')?.value.trim() || '') : '',
+                        delivery_fee:    method === 'delivery' ? DELIVERY_FEE : 0,
+                        payment,
+                        change_for:      payment === 'dinheiro' ? (document.getElementById('troco-value')?.value.trim() || '') : '',
+                        items: cart.map(item => ({
+                            nome:       item.nome,
+                            preco_base: item.precoBase || item.preco,
+                            preco:      item.preco,
+                            qty:        item.quantity,
+                            obs:        item.obs || '',
+                            adicionais: (item.adicionais || []).map(nomeAd => {
+                                const ad = adicionais.find(a => a.nome === nomeAd);
+                                return { nome: nomeAd, preco: ad ? ad.preco : 0 };
+                            }),
+                        })),
+                    };
+                    const resp = await fetch(`${SISTEMA_API_URL}/pedido_externo`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(apiPayload),
+                        signal: AbortSignal.timeout(8000),
+                    });
+                    const data = await resp.json();
+                    if (resp.ok && data.ok) {
+                        sistemaOk = true;
+                        console.log(`✅ Pedido #${data.number} registrado no sistema.`);
+                    }
+                } catch(err) {
+                    console.warn('Sistema offline, usando WhatsApp como fallback:', err.message);
+                }
+            }
+
+            // ── Sempre abre WhatsApp como confirmação ao cliente ──
             window.open(`https://wa.me/5567999496825?text=${encodeURIComponent(msg)}`, '_blank');
 
-            // analytics opcional
-            // gtag_event('purchase', 'Pedido', formatMoneyDot(total));
+            const feedbackMsg = sistemaOk
+                ? 'Pedido registrado no sistema! WhatsApp aberto para confirmação. Deseja limpar o carrinho?'
+                : 'Pedido enviado pelo WhatsApp! Aguarde a confirmação da Rosane. Deseja limpar o carrinho?';
 
             setTimeout(() => {
-                showConfirmModal('Pedido enviado com sucesso! Deseja limpar o carrinho?', () => {
+                showConfirmModal(feedbackMsg, () => {
                     cart = [];
                     updateCart();
                     document.getElementById('cart-button').style.display = 'none';
@@ -2740,7 +2805,9 @@
             }
 
             setInterval(updateStatusBadge, 60000);
-            setInterval(updateFomoBanner, 30000); // #5: verifica o FOMO a cada 30s
+            setInterval(updateFomoBanner, 30000);
+            checkSistemaOnline();
+            setInterval(checkSistemaOnline, 30000);
         });
     </script>
 
