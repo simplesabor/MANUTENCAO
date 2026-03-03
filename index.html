@@ -2668,9 +2668,13 @@ window.location.href = waLink;
             saveCustomerData();
             saveLastOrder();
 
+            // ── Abre WhatsApp ANTES do await (evita bloqueio do navegador) ──
+            window.open(`https://wa.me/5567999496825?text=${encodeURIComponent(msg)}`, '_blank');
+
             // ── Envia para o sistema (se online) ──
             let sistemaOk = false;
             if (sistemaOnline) {
+
                 try {
                     const apiPayload = {
                         api_key:         SISTEMA_API_KEY,
@@ -2708,9 +2712,6 @@ window.location.href = waLink;
                     console.warn('Sistema offline, usando WhatsApp como fallback:', err.message);
                 }
             }
-
-            // ── Sempre abre WhatsApp como confirmação ao cliente ──
-            window.open(`https://wa.me/5567999496825?text=${encodeURIComponent(msg)}`, '_blank');
 
             const feedbackMsg = sistemaOk
                 ? 'Pedido registrado no sistema! WhatsApp aberto para confirmação. Deseja limpar o carrinho?'
