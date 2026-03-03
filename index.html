@@ -1687,7 +1687,8 @@
             msg += '⏰ Terça a Domingo, 19:00 às 23:30 (horário de Brasília)\n';
             msg += '📍 Rua Cassilândia, 1068 — Chapadão do Sul, MS';
 
-            window.open(`https://wa.me/5567999496825?text=${encodeURIComponent(msg)}`, '_blank');
+            const waLink = `https://wa.me/5567999496825?text=${encodeURIComponent(msg)}`;
+window.location.href = waLink;
 
             setTimeout(() => {
                 showConfirmModal('Pedido em grupo enviado! Deseja encerrar o grupo?', () => {
