@@ -875,6 +875,10 @@
       <div class="hero-cta-wrap">
         <button class="btn-primary" onclick="scrollToMenuTop()"><i class="fas fa-utensils"></i> Ver cardápio</button>
         <button class="btn-ghost" onclick="scrollToDeliveryInfo()"><i class="fas fa-motorcycle"></i> Entrega e taxa</button>
+
+        <button id="repeat-last-order" class="btn-ghost" style="display:none;" onclick="repeatLastOrder()">
+          <i class="fas fa-rotate-right"></i> Repetir último pedido
+        </button>
       </div>
     </div>
   </section>
@@ -1109,6 +1113,78 @@
       }
       const prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
       applyTheme(prefersLight ? "light" : "dark");
+    }
+
+    function saveLastOrderSnapshot(){
+      const method = document.getElementById("delivery-method")?.value || "";
+      const name = document.getElementById("customer-name")?.value.trim() || "";
+      const phone = document.getElementById("customer-phone")?.value.trim() || "";
+      const address = method === "delivery" ? (document.getElementById("delivery-address")?.value.trim() || "") : "";
+
+      const snapshot = {
+        created_at: new Date().toISOString(),
+        customer: { name, phone, address },
+        method,
+        payment: document.getElementById("payment-method")?.value || "",
+        change_for: document.getElementById("troco-value")?.value.trim() || "",
+        cart: cart
+      };
+
+      localStorage.setItem("simpleSaborLastOrder", JSON.stringify(snapshot));
+    }
+
+    function loadLastOrderSnapshot(){
+      const raw = localStorage.getItem("simpleSaborLastOrder");
+      if (!raw) return null;
+      try { return JSON.parse(raw); } catch(e) { return null; }
+    }
+
+    function hasLastOrder(){
+      const s = loadLastOrderSnapshot();
+      return !!(s && Array.isArray(s.cart) && s.cart.length);
+    }
+
+    function updateRepeatButtonVisibility(){
+      const btn = document.getElementById("repeat-last-order");
+      if (!btn) return;
+      btn.style.display = hasLastOrder() ? "inline-flex" : "none";
+    }
+
+    function repeatLastOrder(){
+      const s = loadLastOrderSnapshot();
+      if (!s || !Array.isArray(s.cart) || !s.cart.length){
+        showToast("Nenhum pedido anterior encontrado.");
+        return;
+      }
+
+      showConfirmModal("Deseja repetir o último pedido?", () => {
+        cart = s.cart;
+
+        const delivery = document.getElementById("delivery-method");
+        if (delivery && s.method) delivery.value = s.method;
+
+        toggleDeliveryFields();
+
+        const nameEl = document.getElementById("customer-name");
+        const phoneEl = document.getElementById("customer-phone");
+        const addressEl = document.getElementById("delivery-address");
+
+        if (nameEl && s.customer?.name) nameEl.value = s.customer.name;
+        if (phoneEl && s.customer?.phone) phoneEl.value = s.customer.phone;
+        if (addressEl && s.customer?.address) addressEl.value = s.customer.address;
+
+        const payEl = document.getElementById("payment-method");
+        if (payEl && s.payment) payEl.value = s.payment;
+
+        toggleTrocoField();
+
+        const trocoEl = document.getElementById("troco-value");
+        if (trocoEl && s.change_for) trocoEl.value = s.change_for;
+
+        updateCart();
+        toggleCart();
+        showToast("Último pedido carregado.");
+      });
     }
 
     async function checkSistemaOnline(){
@@ -1554,7 +1630,7 @@
 
       if (cart.length === 0){ alert("Seu carrinho está vazio!"); return; }
 
-      let msg = "*PEDIDO — SIMPLÊ SABOR* 🍟\n\nOlá! Gostaria de fazer um pedido:\n\n====================================\n\n";
+      let msg = "*PEDIDO, SIMPLÊ SABOR* 🍟\n\nOlá! Gostaria de fazer um pedido:\n\n====================================\n\n";
 
       cart.forEach((item, i) => {
         const qty = Number(item.quantity || 1);
@@ -1609,6 +1685,8 @@
       msg += "\n====================================\n⏰ Terça a Domingo, 19:00 às 23:30 (horário de Brasília)\n📍 Rua Cassilândia, 1068, Chapadão do Sul, MS\n🏍️ Taxa fixa delivery: R$ 7,00";
 
       saveCustomerData();
+      saveLastOrderSnapshot();
+      updateRepeatButtonVisibility();
 
       window.open(`https://wa.me/5567999496825?text=${encodeURIComponent(msg)}`, "_blank");
 
@@ -1803,6 +1881,7 @@
       updateStatusBadge();
       updateStickyNavVisibility();
       setupActiveSectionObserver();
+      updateRepeatButtonVisibility();
 
       const phoneInput = document.getElementById("customer-phone");
       if (phoneInput){
