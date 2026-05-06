@@ -1030,13 +1030,13 @@
   <script>
     const DELIVERY_FEE = 7.00;
     const SISTEMA_API_URL = "https://tommye-overfierce-aggrievedly.ngrok-free.dev";
-    const SISTEMA_API_KEY = "simplesabor2025";
-
+    const SISTEMA_API_KEY = "44ae2b00fed069a00fb2035add0559eb2a9719f268f27ebf";
     const adicionais = [
       { id: "bacon", nome: "Bacon", preco: 3.00 },
       { id: "calabresa", nome: "Calabresa", preco: 3.00 },
       { id: "salada", nome: "Salada", preco: 2.00 },
-      { id: "salsicha", nome: "Salsicha", preco: 2.00 }
+      { id: "salsicha", nome: "Salsicha", preco: 2.00 },
+      { id: "casquinha", nome: "Casquinha de Queijo", preco: 8.00 }
     ];
 
     const produtos = {
@@ -1044,12 +1044,14 @@
         { id: "dog-tradicional", nome: "Dog Tradicional", preco: 20.00, descricao: "Pão, salsicha, molho vermelho, queijo e batata palha" },
         { id: "dog-calabresa", nome: "Dog Calabresa", preco: 22.00, descricao: "Pão, salsicha, molho vermelho, calabresa, queijo, milho e batata palha" },
         { id: "dog-frango", nome: "Dog Frango", preco: 25.00, descricao: "Pão, salsicha, molho de frango, queijo e batata palha" },
-        { id: "dog-tudo", nome: "Dog Tudo", preco: 30.00, descricao: "Pão, salsicha, molho de frango, bacon, milho, tomate, alface, presunto, queijo e batata palha" }
+        { id: "dog-salada", nome: "Dog Salada", preco: 25.00, descricao: "Pão, salsicha, molho vermelho, queijo, alface, tomate, picles de cebola roxa, milho e batata palha" },
+        { id: "dog-tudo", nome: "Dog Tudo Gaúcho", preco: 32.00, descricao: "Pão, salsicha, molho de frango, bacon, calabresa, picles de cebola roxa, milho, tomate, alface, presunto, queijo e batata palha" }
       ],
       crepes: [
-        { id: "crepe-frango", nome: "Crepe de Frango e Queijo", preco: 20.00, descricao: "Crepe aberto com frango desfiado e queijo derretido" },
+        { id: "crepe-frango", nome: "Crepe de Frango e Queijo", preco: 22.00, descricao: "Crepe aberto com frango desfiado e queijo derretido" },
         { id: "crepe-presunto", nome: "Crepe de Presunto e Queijo", preco: 20.00, descricao: "Crepe aberto com presunto e queijo derretido" },
         { id: "crepe-carne-seca", nome: "Crepe de Carne Seca e Queijo", preco: 25.00, descricao: "Crepe aberto com carne seca desfiada e queijo derretido" },
+        { id: "crepe-queijo", nome: "Crepe de Queijo", preco: 20.00, descricao: "Crepe aberto com bastante queijo derretido" },
         { id: "crepe-chocolate", nome: "Crepe de Chocolate ao Leite", preco: 25.00, descricao: "Crepe doce com chocolate ao leite cremoso" },
         { id: "crepe-nutella", nome: "Crepe de Nutella", preco: 28.00, descricao: "Crepe doce com nutella" },
         { id: "crepe-romeu", nome: "Crepe de Romeu e Julieta", preco: 25.00, descricao: "Crepe doce com goiabada e queijo" }
@@ -1058,7 +1060,6 @@
         { id: "Agua", nome: "Água", preco: 4.00, descricao: "Água mineral com ou sem gás" },
         { id: "Suco-uva", nome: "Suco de Uva", preco: 7.00, descricao: "Suco de uva lata Del Valle 290ml" },
         { id: "Suco-maracuja", nome: "Suco de Maracujá", preco: 7.00, descricao: "Suco de maracujá Del Valle lata 290ml" },
-        { id: "Suco-pessego", nome: "Suco de Pessego", preco: 7.00, descricao: "Suco de pessego Del Valle lata 290ml" },
         { id: "Coca-mini", nome: "Coca-Cola Mini 220ml", preco: 5.00, descricao: "Coca-Cola lata mini 220ml" },
         { id: "Fanta-mini", nome: "Fanta Mini 220ml", preco: 5.00, descricao: "Fanta lata mini 220ml" },
         { id: "Coca-350", nome: "Coca-Cola/Zero 350ml", preco: 6.00, descricao: "Coca-Cola ou Coca Zero lata 350ml" },
@@ -1066,7 +1067,8 @@
         { id: "Coca-600", nome: "Coca-Cola 600ml", preco: 8.00, descricao: "Coca-Cola garrafa 600ml" },
         { id: "Coca-1l", nome: "Coca-Cola 1 Litro", preco: 9.00, descricao: "Coca-Cola garrafa 1 litro", unavailableForDelivery: true },
         { id: "Heineken-269", nome: "Cerveja Heineken 269ml", preco: 8.00, descricao: "Cerveja Heineken lata 269ml" },
-        { id: "Amstel-269", nome: "Cerveja Amstel 269ml", preco: 6.00, descricao: "Cerveja Amstel lata 269ml" }
+        { id: "Amstel-269", nome: "Cerveja Amstel 269ml", preco: 6.00, descricao: "Cerveja Amstel lata 269ml" },
+        { id: "Brahma-269", nome: "Cerveja Brahma 269ml", preco: 6.00,  descricao: "Cerveja Brahma lata 269ml" }
       ]
     };
 
